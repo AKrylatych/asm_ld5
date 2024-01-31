@@ -25,10 +25,10 @@ start:
     mov	ax, 13h				;
 	int	10h					;grafinis video rezimas
     
-	mov	ax, 0				;inicializuojame pele
-	int	33h
-    mov ax, 0001h
-    int 33h
+	;mov	ax, 0				;inicializuojame pele
+	;int	33h
+    ;mov ax, 0001h
+    ;int 33h
 
 
     jmp viskas
@@ -43,9 +43,13 @@ trystaskai endp
 viskas:
     ret
 
-    pradzia db 'Iveskite kas kiek laiko mirksės A raide',0Ah,0Dh,'$'
+    pradzia db 'Iveskite kas kiek laiko mirkses A raide',0Ah,0Dh,'$'
     mirkseti_1 db '[ A ] 100 ms',0Ah,0Dh,'$'
     mirkseti_2 db '[ B ] 200 ms',0Ah,0Dh,'$'
-    mirkseti_3 db '[ C ] 300 ms',0Ah,0Dh,'$'
+    mirkseti_3 db '[ C ] 300 ms',0Ah,0Dh,'$'  
+    
+    mirksejimo_tarpas dw ? 
+    paspaudimo_x dw, 0
+    paspaudimo_y dw
 
 end start
