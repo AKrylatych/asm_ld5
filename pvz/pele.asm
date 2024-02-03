@@ -6,7 +6,7 @@ start:
 	mov	ax, 13h				
 	int	10h					;grafinis video rezimas
 	mov	ax, 0				;inicializuojame pele
-	int	33h`
+	int	33h
 	mov	ax, 1				;rodyk peles zymekli
 	int	33h
 	mov	ax, 000Ch			;ijungiame peles ivykiu apdorojimo programa
