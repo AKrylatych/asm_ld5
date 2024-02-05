@@ -1,11 +1,20 @@
 .model tiny
 .code
     org 100h
-start:
+start:        
+; Sukurti programele, kuri paspaudus
+; kairiji peles klavisa
+; prie zymeklio pamikrsi jusu vardo raide
+; jei buvo ivestas 
+; 1 - mirkses kas 100 ms
+; 2 - mirkses kas 200 ms
+; 3 - mirkses kas 300 ms
+; jei paspausime desiniji peles klavisa
+; tai programa pades 3 taskus
     ; Sukurti programÄ… kuri paspaudus 
     ; kairijÄ¯ pelÄ—s klaviÅ¡Ä… prie Å¾ymeklio pamirksi 
     ; JÅ«sÅ³ vardo raidÄ™: 
-    ; jei buvo Ä¯vestas 1 - mirksÄ—s kas 100 ms, 
+    ; jei buvo ivestas 1 - mirksÄ—s kas 100 ms, 
     ; 2 - mirksÄ—s kas 200 ms, 
     ; 3 - mirksÄ—s kas 300 ms. 
     ; Jei paspausime deÅ¡inÄ¯ pelÄ—s klaviÅ¡Ä…, 
@@ -64,21 +73,23 @@ tikrinti_kairi:
     and  ax, 0000000000000001b ;?¦¦ BIT 0 : LEFT BUTTON.
     jz   tikrinti_desini  ;?¦¦ IF BIT 0 == 0 : NO LEFT BUTTON.                  
     
-    
-    mov ah, 01h ; Pasirenkame veiksma
-    int 21h                
-    
-    
+   
     call cursorpos
     ;mov  ah, 9      ;?¦¦ DISPLAY "RIGHT BUTTON PRESSED"  
     
-    mov dh, byte ptr cursor_x
-    mov dl, byte ptr cursor_y
+    mov ah, 0Ah       
+    mov al, ' '
+    mov cx, 1      
+    int 10h 
+    
+    mov dh, byte ptr cursor_y
+    mov dl, byte ptr cursor_x
     mov bh, 0
     mov ah, 2
     int 10h  
-           
-    mov al, 'E'
+    
+    mov ah, 0Ah       
+    mov al, 'A'
     mov cx, 1      
     int 10h 
     
@@ -90,67 +101,115 @@ tikrinti_desini:
     ;CHECK RIGHT BUTTON STATE.
     mov  ax, bx  ;?¦¦ PRESERVE BX.
     and  ax, 0000000000000010b ;?¦¦ BIT 1 : RIGHT BUTTON.
-    jz   mirkseti  ;?¦¦ IF BIT 1 == 0 : NO RIGHT BUTTON.   
+    jz   mirkseti  ;?¦¦ IF BIT 1 == 0 : NO RIGHT BUTTON.
+    
+    mov ah, 7
+    int 21h 
+    
+    push cursor_x
+    push cursor_y   
     call cursorpos
     
+    mov dh, byte ptr cursor_y
+    mov dl, byte ptr cursor_x
+    mov bh, 0
+    mov ah, 2
+    int 10h  
     
+    mov ah, 0Ah       
+    mov al, '.'
+    mov cx, 3      
+    int 10h    
     
+    pop cursor_y
+    pop cursor_x 
     
-    ;mov  ah, 9      ;?¦¦ DISPLAY "RIGHT BUTTON PRESSED"  
+    mov dh, byte ptr cursor_y
+    mov dl, byte ptr cursor_x
+    mov bh, 0
+    mov ah, 2
+    int 10h  
     
-    ;mov dh, 10
-    ;mov dl, 20
-    ;mov bh, 0
-    ;mov ah, 2
-    ;int 10h  
-           
-    ;mov al, 'E'
-    ;mov cx, 1      
-    ;int 10h        
+
    
     
    
 
-mirkseti:
+mirkseti: 
+     mov	ah, 2Ch					;Laikas
+	int	21h
+	cmp	mirksejimo_laikas, dl					;patikrina ar praejo simtoji sekundes dalis
+	je	mirkseti					;Jei ne, bus kartojama kol praeis
+	mov	mirksejimo_laikas, dl					;Saugome einamosios sekund?s dh registre parodymus
+	push	bx					;? stek?
+
+	mov ah, 08h
+	mov bh, 0
+    int 10h
+    
+    cmp al, ' '  ; ziurima ar yra simbolis 
+    je nera_simbolio
+yra_simbolis: ; jei yra simbolis, ji nutrinti
+    mov ah, 0Ah
+    mov al, ' '
+    mov cx, 1
+    int 10h    
+    jmp short toliau
+nera_simbolio: ; jeigu nera simbolio, reikia ji parasyti
+    mov ah, 0Ah
+    mov al, 'A'
+    mov cx, 1
+    int 10h 
+
+	jmp	short toliau
+
+toliau:	
+    pop	bx
+     
+    add bx, pasirinktas_greitis 
+    mov mirksejimo_laikas, bl
+
+
+
 
 
     jmp tikrinti_kairi                                            
 cursorpos proc
     ;mov ax, 3
-    ;int 33h
+
     
     mov cursor_x, cx
     mov cursor_y, dx
     
-    mov ax,cursor_x ;preparing the dividend
-		mov dx,0 ;zero extension
-		mov cx,8 ;preparing the divisor
-		div cx   ;divides AX by CX, with quotient being stored in AX, and remainder in DX 
+    mov ax,cursor_x ; bus dalijamas ax
+		mov dx,0 ; paruosiame vieta liekanai
+		mov cx,8 ; bus dalinama is 8
+		div cx   ; dalina ax is cx
+		; rezultatas bus irasomas i ax
+		; likutis rasomas i dx   
 		
-	;mov offset raides_x, ax
-	;mov offset raides_y, dx
-	mov cursor_x, ax    
+	mov cursor_x, ax  ; irasoma zymeklio pozicija  
 	
-	mov ax,cursor_y ;preparing the dividend
-	mov dx,0 ;zero extension
-	mov cx,8 ;preparing the divisor
-	div cx   ;divides AX by CX, with quotient being stored in AX, and remainder in DX     
+	mov ax,cursor_y 
+	mov dx,0 
+	mov cx,8 
+	div cx    
 	
 	mov cursor_y, ax 
     
     ret
 cursorpos endp
+
 viskas:
     ret
 
-    pradzia_sakinys db 'Iveskite kas kiek laiko mirksÄ—s A raide',0Ah,0Dh,'$'
+    pradzia_sakinys db 'Iveskite kas kiek laiko mirkses A raide',0Ah,0Dh,'$'
     mirkseti_1 db '[ A ] 100 ms',0Ah,0Dh,'$'
     mirkseti_2 db '[ B ] 200 ms',0Ah,0Dh,'$'
     mirkseti_3 db '[ C ] 300 ms',0Ah,0Dh,'$'
-    paspaudei_kairi db 'uraa',0Ah,0Dh,'$'
     
-    raides_x dw ?
-    raides_y dw ?   
+    mirksejimo_laikas db ?
+   
     cursor_x dw ?
     cursor_y dw ?
     
